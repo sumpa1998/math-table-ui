@@ -1,22 +1,23 @@
+// src/App.jsx  (updated — added logout button)
 import { useState, useEffect, useRef } from 'react'
 import { fetchMathTable } from './mathService'
+import { useAuth } from './AuthContext'
+import { logout } from './firebase'
 import './App.css'
 
 const CHARACTERS = [
-  { emoji: '🦁', name: 'Leo', color: '#FF6B35' },
-  { emoji: '🐸', name: 'Froggy', color: '#4CAF50' },
+  { emoji: '🦁', name: 'Leo',     color: '#FF6B35' },
+  { emoji: '🐸', name: 'Froggy',  color: '#4CAF50' },
   { emoji: '🦄', name: 'Sparkle', color: '#E040FB' },
-  { emoji: '🐼', name: 'Panda', color: '#37474F' },
-  { emoji: '🐯', name: 'Tigger', color: '#FF9800' },
-  { emoji: '🦊', name: 'Felix', color: '#FF5722' },
+  { emoji: '🐼', name: 'Panda',   color: '#37474F' },
+  { emoji: '🐯', name: 'Tigger',  color: '#FF9800' },
+  { emoji: '🦊', name: 'Felix',   color: '#FF5722' },
 ]
 
 const STAR_COLORS = ['#FFD700', '#FF6B9D', '#00E5FF', '#76FF03', '#FF9100']
 
 function FloatingStar({ style }) {
-  return (
-    <div className="floating-star" style={style}>⭐</div>
-  )
+  return <div className="floating-star" style={style}>⭐</div>
 }
 
 function ConfettiPiece({ style }) {
@@ -43,10 +44,12 @@ function NumberCard({ value, index, multiplier, isVisible }) {
 }
 
 export default function App() {
-  const [number, setNumber] = useState('')
+  const { user } = useAuth()
+
+  const [number, setNumber]     = useState('')
   const [tableData, setTableData] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
   const [character, setCharacter] = useState(CHARACTERS[0])
   const [celebrate, setCelebrate] = useState(false)
   const [floatingStars, setFloatingStars] = useState([])
@@ -58,11 +61,11 @@ export default function App() {
     const stars = Array.from({ length: 12 }, (_, i) => ({
       id: i,
       style: {
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        fontSize: `${Math.random() * 20 + 10}px`,
+        left:              `${Math.random() * 100}%`,
+        top:               `${Math.random() * 100}%`,
+        fontSize:          `${Math.random() * 20 + 10}px`,
         animationDuration: `${Math.random() * 3 + 2}s`,
-        animationDelay: `${Math.random() * 2}s`,
+        animationDelay:    `${Math.random() * 2}s`,
         opacity: 0.4,
       }
     }))
@@ -74,21 +77,18 @@ export default function App() {
     const pieces = Array.from({ length: 40 }, (_, i) => ({
       id: i,
       style: {
-        left: `${Math.random() * 100}%`,
-        top: `-10px`,
-        background: STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)],
-        width: `${Math.random() * 10 + 6}px`,
-        height: `${Math.random() * 10 + 6}px`,
-        borderRadius: Math.random() > 0.5 ? '50%' : '0',
+        left:              `${Math.random() * 100}%`,
+        top:               `-10px`,
+        background:        STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)],
+        width:             `${Math.random() * 10 + 6}px`,
+        height:            `${Math.random() * 10 + 6}px`,
+        borderRadius:      Math.random() > 0.5 ? '50%' : '0',
         animationDuration: `${Math.random() * 1.5 + 1}s`,
-        animationDelay: `${Math.random() * 0.5}s`,
+        animationDelay:    `${Math.random() * 0.5}s`,
       }
     }))
     setConfetti(pieces)
-    setTimeout(() => {
-      setCelebrate(false)
-      setConfetti([])
-    }, 2500)
+    setTimeout(() => { setCelebrate(false); setConfetti([]) }, 2500)
   }
 
   const handleFetch = async () => {
@@ -99,12 +99,10 @@ export default function App() {
       setTimeout(() => setCharBounce(false), 600)
       return
     }
-
     setError('')
     setLoading(true)
     setTableData([])
     setCharacter(CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)])
-
     try {
       const data = await fetchMathTable(num)
       setTableData(data)
@@ -116,9 +114,7 @@ export default function App() {
     }
   }
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') handleFetch()
-  }
+  const handleKeyDown = (e) => { if (e.key === 'Enter') handleFetch() }
 
   const handleNumberClick = (n) => {
     setNumber(String(n))
@@ -140,6 +136,18 @@ export default function App() {
           <span className="title-rocket">🚀</span>
         </h1>
         <p className="app-subtitle">Learn your multiplication tables the FUN way!</p>
+
+        {/* ── User info + logout ── */}
+        {user && (
+          <div className="user-bar">
+            <span className="user-greeting">
+              👋 {user.displayName || user.email}
+            </span>
+            <button className="logout-btn" onClick={logout} type="button">
+              🚪 Logout
+            </button>
+          </div>
+        )}
       </header>
 
       <div className={`mascot-container ${charBounce ? 'bounce-error' : ''} ${celebrate ? 'mascot-celebrate' : ''}`}>
@@ -207,13 +215,7 @@ export default function App() {
           </div>
           <div className="cards-grid">
             {tableData.map((val, i) => (
-              <NumberCard
-                key={i}
-                value={val}
-                index={i}
-                multiplier={number}
-                isVisible={true}
-              />
+              <NumberCard key={i} value={val} index={i} multiplier={number} isVisible={true} />
             ))}
           </div>
           <div className="results-footer">
