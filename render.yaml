@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: math-table-ui
+    runtime: static
+    buildCommand: cd vite-project && npm install && npm run build
+    staticPublishPath: vite-project/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
